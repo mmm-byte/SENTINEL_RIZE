@@ -3,169 +3,734 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SENTINEL · Arize Phoenix Track · SRE Cockpit</title>
+    <title>SENTINEL · Arize Phoenix · SRE Cockpit</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        :root {
-            --bg:#0A0E17; --surface:#111827; --surface2:#1A2235;
-            --border:#1F2D45; --blue:#3B82F6; --blue-glow:rgba(59,130,246,0.25);
-            --green:#10B981; --yellow:#F59E0B; --orange:#F97316;
-            --red:#EF4444; --purple:#8B5CF6; --text:#E2E8F0; --muted:#64748B;
-            --font:'JetBrains Mono','Courier New',monospace;
-        }
-        body { font-family:var(--font); background:var(--bg); color:var(--text); height:100vh; overflow:hidden; display:flex; flex-direction:column; }
+    /* ═══════════════════════════════════════════════════
+       ARIZE PHOENIX BRAND TOKENS
+       Primary:  #7C3AED (violet-700)  / #6D28D9 (violet-800)
+       Accent:   #A78BFA (violet-400)  / #DDD6FE (violet-200)
+       Phoenix:  #F97316 (orange)      glow accent
+       Bg:       #0F0A1E  surface: #1A1033  surface2: #241645
+    ═══════════════════════════════════════════════════ */
+    :root {
+        --bg:          #0F0A1E;
+        --surface:     #1A1033;
+        --surface2:    #241645;
+        --surface3:    #2E1A55;
+        --border:      #3B2A6B;
+        --border-soft: rgba(124,58,237,.25);
 
-        /* Header */
-        .header { background:var(--surface); border-bottom:1px solid var(--border); padding:.75rem 1.5rem; display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-shrink:0; }
-        .brand { display:flex; align-items:center; gap:.75rem; }
-        .brand-icon { font-size:1.4rem; }
-        .brand-name { font-size:1.15rem; font-weight:700; color:var(--blue); letter-spacing:.05em; }
-        .brand-sub  { font-size:.7rem; color:var(--muted); margin-top:1px; }
-        .kpi-bar { display:flex; gap:1.5rem; align-items:center; }
-        .kpi { text-align:center; }
-        .kpi-label { font-size:.6rem; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; }
-        .kpi-value { font-size:1rem; font-weight:700; color:var(--blue); }
-        .kpi-value.green  { color:var(--green); }
-        .kpi-value.yellow { color:var(--yellow); }
-        .kpi-value.red    { color:var(--red); }
-        .system-badge { padding:.3rem .75rem; border-radius:9999px; font-size:.72rem; font-weight:700; letter-spacing:.05em; }
-        .badge-critical { background:rgba(239,68,68,.15); color:var(--red);   border:1px solid var(--red); }
-        .badge-healthy  { background:rgba(16,185,129,.15); color:var(--green); border:1px solid var(--green); }
-        .badge-healing  { background:rgba(59,130,246,.15); color:var(--blue);  border:1px solid var(--blue); }
+        /* Arize violet brand */
+        --violet:      #7C3AED;
+        --violet-lt:   #A78BFA;
+        --violet-dim:  rgba(124,58,237,.18);
+        --violet-glow: rgba(124,58,237,.35);
+        --indigo:      #4F46E5;
+        --indigo-lt:   #818CF8;
 
-        /* Layout */
-        .workspace { display:grid; grid-template-columns:260px 1fr 320px; flex:1; overflow:hidden; }
+        /* Phoenix orange flame */
+        --flame:       #F97316;
+        --flame-lt:    #FDBA74;
+        --flame-dim:   rgba(249,115,22,.18);
+        --flame-glow:  rgba(249,115,22,.4);
 
-        /* Rail */
-        .rail { background:var(--surface); border-right:1px solid var(--border); overflow-y:auto; padding:1rem .75rem; }
-        .rail-title { font-size:.62rem; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; margin-bottom:.75rem; padding-left:.25rem; }
-        .stage-card { background:var(--surface2); border:1px solid var(--border); border-radius:6px; padding:.65rem .75rem; margin-bottom:.5rem; cursor:pointer; transition:border-color .2s,box-shadow .2s; }
-        .stage-card:hover,.stage-card.active { border-color:var(--blue); box-shadow:0 0 8px var(--blue-glow); }
-        .sc-top { display:flex; align-items:center; gap:.6rem; margin-bottom:.3rem; }
-        .sc-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
-        .sc-dot.idle    { background:var(--muted); }
-        .sc-dot.running { background:var(--yellow); animation:pulse .9s infinite; }
-        .sc-dot.success { background:var(--green); }
-        .sc-dot.failed  { background:var(--red); }
-        .sc-dot.awaiting_approval { background:var(--orange); animation:pulse 1.2s infinite; }
-        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
-        .sc-name { font-size:.8rem; font-weight:700; }
-        .sc-msg  { font-size:.68rem; color:var(--muted); padding-left:1.6rem; }
-        .confidence-bar { height:3px; border-radius:2px; background:var(--border); margin-top:.45rem; overflow:hidden; }
-        .confidence-fill { height:100%; border-radius:2px; transition:width .6s ease; }
+        /* Status */
+        --green:  #10B981;  --green-dim:  rgba(16,185,129,.18);
+        --yellow: #FBBF24;  --yellow-dim: rgba(251,191,36,.18);
+        --red:    #EF4444;  --red-dim:    rgba(239,68,68,.18);
+        --cyan:   #06B6D4;
 
-        /* Center */
-        .center-pane { display:flex; flex-direction:column; overflow:hidden; padding:1rem; gap:.75rem; }
-        .topo-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:.75rem; }
-        .topo-node { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:1rem; text-align:center; transition:border-color .3s,box-shadow .3s; }
-        .topo-node.active  { border-color:var(--blue);  box-shadow:0 0 12px var(--blue-glow); }
-        .topo-node.success { border-color:var(--green); box-shadow:0 0 8px rgba(16,185,129,.2); }
-        .topo-node.error   { border-color:var(--red);   box-shadow:0 0 8px rgba(239,68,68,.2); }
-        .topo-node.pending { border-color:var(--yellow); }
-        .topo-icon  { font-size:1.6rem; margin-bottom:.35rem; }
-        .topo-label { font-size:.8rem; font-weight:700; color:var(--blue); }
-        .topo-sub   { font-size:.62rem; color:var(--muted); margin-top:.2rem; }
+        --text:   #EDE9FE;
+        --text2:  #C4B5FD;
+        --muted:  #7C6FAB;
 
-        .confidence-panel { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:.9rem 1rem; }
-        .cp-title { font-size:.72rem; font-weight:700; color:var(--blue); margin-bottom:.6rem; letter-spacing:.05em; }
-        .cp-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:.5rem; }
-        .cp-item { text-align:center; }
-        .cp-val { font-size:1.1rem; font-weight:700; }
-        .cp-lbl { font-size:.58rem; color:var(--muted); margin-top:2px; }
-        .tier-LOW      { color:var(--green); }
-        .tier-MEDIUM   { color:var(--yellow); }
-        .tier-HIGH     { color:var(--orange); }
-        .tier-CRITICAL { color:var(--red); }
+        --font-ui:   'Inter', sans-serif;
+        --font-mono: 'JetBrains Mono', monospace;
 
-        .timeline { flex:1; background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:.9rem 1rem; overflow-y:auto; }
-        .tl-title { font-size:.72rem; font-weight:700; color:var(--blue); margin-bottom:.6rem; }
-        .tl-event { padding:.45rem .65rem; margin-bottom:.35rem; background:rgba(0,0,0,.25); border-left:3px solid var(--border); border-radius:0 4px 4px 0; font-size:.7rem; }
-        .tl-event.ok   { border-left-color:var(--green);  color:var(--green); }
-        .tl-event.info { border-left-color:var(--blue);   color:#93C5FD; }
-        .tl-event.warn { border-left-color:var(--yellow); color:var(--yellow); }
-        .tl-event.bad  { border-left-color:var(--red);    color:var(--red); }
-        .tl-ts { color:var(--muted); font-size:.62rem; margin-right:.4rem; }
+        --radius: 10px;
+        --radius-sm: 6px;
+    }
 
-        /* Right panel */
-        .right-panel { background:var(--surface); border-left:1px solid var(--border); overflow-y:auto; padding:1rem; font-size:.78rem; }
-        .rp-section { margin-bottom:1.1rem; }
-        .rp-title { font-size:.6rem; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); margin-bottom:.4rem; }
-        .rp-box { background:var(--surface2); border:1px solid var(--border); border-radius:6px; padding:.6rem .75rem; word-break:break-all; line-height:1.6; }
-        .rp-box a { color:var(--blue); text-decoration:none; }
-        .factor-list { list-style:none; }
-        .factor-list li { font-size:.68rem; padding:.22rem 0; }
-        .factor-list li.warn { color:var(--yellow); }
-        .factor-list li.ok   { color:var(--green); }
-        .btn-row { display:flex; gap:.5rem; margin-top:.6rem; }
-        .btn { flex:1; padding:.5rem; border:none; border-radius:6px; font-family:var(--font); font-size:.72rem; font-weight:700; cursor:pointer; transition:all .2s; letter-spacing:.04em; }
-        .btn-green  { background:rgba(16,185,129,.2);  color:var(--green);  border:1px solid var(--green); }
-        .btn-green:hover  { background:rgba(16,185,129,.35); }
-        .btn-red    { background:rgba(239,68,68,.15);   color:var(--red);    border:1px solid var(--red); }
-        .btn-red:hover    { background:rgba(239,68,68,.3); }
-        .btn-blue   { background:rgba(59,130,246,.15);  color:var(--blue);   border:1px solid var(--blue); }
-        .btn-blue:hover   { background:rgba(59,130,246,.3); }
-        .btn-purple { background:rgba(139,92,246,.15);  color:var(--purple); border:1px solid var(--purple); }
-        .btn-purple:hover { background:rgba(139,92,246,.3); }
-        .memory-item { background:var(--surface2); border:1px solid var(--border); border-radius:5px; padding:.45rem .65rem; margin-bottom:.35rem; font-size:.68rem; }
-        .mi-outcome.SUCCESS { color:var(--green); }
-        .mi-outcome.PARTIAL { color:var(--yellow); }
-        .mi-outcome.FAILED  { color:var(--red); }
-        .separator { height:1px; background:var(--border); margin:.75rem 0; }
-        .reasoning-step { font-size:.68rem; padding:.28rem 0; color:var(--muted); border-bottom:1px solid var(--border); }
-        .reasoning-step:last-child { border-bottom:none; }
-        .reasoning-step strong { color:var(--text); }
-        .phoenix-badge { display:inline-flex; align-items:center; gap:.3rem; background:rgba(139,92,246,.15); border:1px solid rgba(139,92,246,.4); border-radius:4px; padding:.2rem .5rem; font-size:.62rem; color:var(--purple); margin-bottom:.6rem; }
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+    body {
+        font-family: var(--font-ui);
+        background: var(--bg);
+        color: var(--text);
+        height: 100vh;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        background-image:
+            radial-gradient(ellipse 80% 50% at 50% -20%, rgba(124,58,237,.15) 0%, transparent 60%),
+            radial-gradient(ellipse 40% 30% at 90% 10%,  rgba(249,115,22,.08) 0%, transparent 50%);
+    }
+
+    /* ─── SCROLLBAR ─────────────────────────────────── */
+    ::-webkit-scrollbar { width:5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius:4px; }
+
+    /* ─── HEADER ────────────────────────────────────── */
+    .header {
+        background: linear-gradient(135deg, #1A1033 0%, #1E1240 60%, #200E3A 100%);
+        border-bottom: 1px solid var(--border);
+        padding: .7rem 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        flex-shrink: 0;
+        position: relative;
+        overflow: hidden;
+    }
+    .header::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(90deg, var(--violet-dim) 0%, transparent 50%, var(--flame-dim) 100%);
+        pointer-events: none;
+    }
+    .header::after {
+        content: '';
+        position: absolute;
+        bottom: 0; left: 0; right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, var(--violet-lt), var(--flame), var(--violet-lt), transparent);
+        opacity: .5;
+    }
+
+    .brand { display:flex; align-items:center; gap:.85rem; position:relative; z-index:1; }
+    .brand-logo {
+        width: 38px; height: 38px;
+        background: linear-gradient(135deg, var(--violet) 0%, var(--flame) 100%);
+        border-radius: 10px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.2rem;
+        box-shadow: 0 0 16px var(--violet-glow), 0 0 32px var(--flame-dim);
+        animation: logoBreath 3s ease-in-out infinite;
+    }
+    @keyframes logoBreath {
+        0%,100% { box-shadow: 0 0 16px var(--violet-glow), 0 0 32px var(--flame-dim); }
+        50%      { box-shadow: 0 0 28px var(--violet-glow), 0 0 48px rgba(249,115,22,.3); }
+    }
+    .brand-text {}
+    .brand-name {
+        font-size: 1.1rem;
+        font-weight: 800;
+        background: linear-gradient(90deg, var(--violet-lt) 0%, var(--flame-lt) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        letter-spacing: .06em;
+    }
+    .brand-sub { font-size: .62rem; color: var(--muted); margin-top: 1px; letter-spacing: .03em; }
+
+    /* KPI bar */
+    .kpi-bar { display:flex; gap:1.2rem; align-items:center; position:relative; z-index:1; }
+    .kpi { text-align:center; }
+    .kpi-sep { width:1px; height:28px; background:var(--border); }
+    .kpi-label { font-size:.58rem; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; font-weight:600; }
+    .kpi-value { font-size:.95rem; font-weight:700; color:var(--violet-lt); margin-top:1px; font-family:var(--font-mono); }
+    .kpi-value.green  { color:var(--green); }
+    .kpi-value.yellow { color:var(--yellow); }
+    .kpi-value.red    { color:var(--red); }
+    .kpi-value.flame  { color:var(--flame-lt); }
+
+    .system-badge {
+        padding: .3rem .9rem;
+        border-radius: 9999px;
+        font-size: .68rem;
+        font-weight: 700;
+        letter-spacing: .06em;
+        position: relative;
+        z-index: 1;
+    }
+    .badge-critical {
+        background: var(--red-dim);
+        color: var(--red);
+        border: 1px solid rgba(239,68,68,.5);
+        box-shadow: 0 0 12px rgba(239,68,68,.2);
+    }
+    .badge-healthy {
+        background: var(--green-dim);
+        color: var(--green);
+        border: 1px solid rgba(16,185,129,.5);
+        box-shadow: 0 0 12px rgba(16,185,129,.2);
+    }
+    .badge-healing {
+        background: var(--violet-dim);
+        color: var(--violet-lt);
+        border: 1px solid rgba(124,58,237,.5);
+        box-shadow: 0 0 12px var(--violet-glow);
+        animation: badgePulse 1.2s ease-in-out infinite;
+    }
+    @keyframes badgePulse {
+        0%,100% { box-shadow:0 0 12px var(--violet-glow); }
+        50%      { box-shadow:0 0 24px var(--violet-glow); }
+    }
+
+    /* ─── WORKSPACE ─────────────────────────────────── */
+    .workspace {
+        display: grid;
+        grid-template-columns: 256px 1fr 310px;
+        flex: 1;
+        overflow: hidden;
+    }
+
+    /* ─── LEFT RAIL ─────────────────────────────────── */
+    .rail {
+        background: var(--surface);
+        border-right: 1px solid var(--border);
+        overflow-y: auto;
+        padding: 1rem .75rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+    }
+    .rail-title {
+        font-size: .58rem;
+        font-weight: 700;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: .1em;
+        margin-bottom: .6rem;
+        padding: 0 .25rem;
+    }
+
+    .stage-card {
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: .6rem .7rem;
+        margin-bottom: .4rem;
+        cursor: pointer;
+        transition: border-color .2s, box-shadow .2s, background .2s;
+        position: relative;
+        overflow: hidden;
+    }
+    .stage-card::before {
+        content: '';
+        position: absolute;
+        left: 0; top: 0; bottom: 0;
+        width: 3px;
+        background: var(--border);
+        transition: background .2s;
+    }
+    .stage-card:hover,
+    .stage-card.active {
+        border-color: var(--violet);
+        background: var(--surface3);
+        box-shadow: 0 0 12px var(--violet-dim), inset 0 0 20px rgba(124,58,237,.05);
+    }
+    .stage-card:hover::before,
+    .stage-card.active::before { background: var(--violet); }
+    .stage-card.stage-success::before  { background: var(--green); }
+    .stage-card.stage-failed::before   { background: var(--red); }
+    .stage-card.stage-waiting::before  { background: var(--flame); animation: flamePulse 1s infinite; }
+    @keyframes flamePulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+    .sc-top { display:flex; align-items:center; gap:.55rem; margin-bottom:.25rem; }
+    .sc-dot {
+        width: 8px; height: 8px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        transition: background .3s;
+    }
+    .sc-dot.idle              { background: var(--muted); }
+    .sc-dot.running           { background: var(--violet-lt); animation: dotPulse .8s infinite; }
+    .sc-dot.success           { background: var(--green); }
+    .sc-dot.failed            { background: var(--red); }
+    .sc-dot.awaiting_approval { background: var(--flame); animation: dotPulse 1.1s infinite; }
+    @keyframes dotPulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.7)} }
+
+    .sc-name {
+        font-size: .75rem;
+        font-weight: 600;
+        color: var(--text2);
+        letter-spacing: .01em;
+    }
+    .sc-msg {
+        font-size: .65rem;
+        color: var(--muted);
+        padding-left: 1.4rem;
+        font-family: var(--font-mono);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .confidence-bar {
+        height: 2px;
+        border-radius: 2px;
+        background: rgba(255,255,255,.06);
+        margin-top: .4rem;
+        overflow: hidden;
+    }
+    .confidence-fill {
+        height: 100%;
+        border-radius: 2px;
+        transition: width .7s cubic-bezier(.4,0,.2,1);
+    }
+
+    /* Action buttons */
+    .action-group {
+        display: flex;
+        flex-direction: column;
+        gap: .4rem;
+        margin-top: .5rem;
+    }
+    .btn {
+        width: 100%;
+        padding: .5rem .75rem;
+        border: none;
+        border-radius: var(--radius-sm);
+        font-family: var(--font-ui);
+        font-size: .72rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all .18s;
+        letter-spacing: .04em;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: .4rem;
+    }
+    .btn-violet {
+        background: linear-gradient(135deg, var(--violet) 0%, var(--indigo) 100%);
+        color: #fff;
+        box-shadow: 0 2px 12px var(--violet-dim);
+    }
+    .btn-violet:hover { filter:brightness(1.15); box-shadow:0 4px 20px var(--violet-glow); }
+    .btn-flame {
+        background: linear-gradient(135deg, var(--flame) 0%, #DC2626 100%);
+        color: #fff;
+        box-shadow: 0 2px 12px var(--flame-dim);
+    }
+    .btn-flame:hover { filter:brightness(1.15); box-shadow:0 4px 20px var(--flame-glow); }
+    .btn-ghost-green {
+        background: var(--green-dim);
+        color: var(--green);
+        border: 1px solid rgba(16,185,129,.4);
+    }
+    .btn-ghost-green:hover { background: rgba(16,185,129,.3); box-shadow:0 0 12px rgba(16,185,129,.3); }
+    .btn-ghost-red {
+        background: var(--red-dim);
+        color: var(--red);
+        border: 1px solid rgba(239,68,68,.4);
+    }
+    .btn-ghost-red:hover { background: rgba(239,68,68,.28); box-shadow:0 0 12px rgba(239,68,68,.3); }
+
+    /* ─── CENTER PANE ───────────────────────────────── */
+    .center-pane {
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        padding: .9rem;
+        gap: .7rem;
+        background:
+            radial-gradient(ellipse 60% 40% at 30% 0%, rgba(124,58,237,.06) 0%, transparent 70%);
+    }
+
+    /* Topology grid */
+    .topo-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: .6rem;
+    }
+    .topo-node {
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: .8rem .75rem;
+        text-align: center;
+        transition: border-color .3s, box-shadow .3s, background .3s;
+        backdrop-filter: blur(4px);
+        position: relative;
+        overflow: hidden;
+    }
+    .topo-node::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, rgba(255,255,255,.02) 0%, transparent 60%);
+        pointer-events: none;
+    }
+    .topo-node.active {
+        border-color: var(--violet);
+        background: var(--surface3);
+        box-shadow: 0 0 20px var(--violet-dim), inset 0 0 30px rgba(124,58,237,.06);
+    }
+    .topo-node.active .topo-icon { animation: iconSpin .5s ease-out; }
+    @keyframes iconSpin { 0%{transform:scale(.8) rotate(-10deg)} 100%{transform:scale(1) rotate(0)} }
+    .topo-node.success {
+        border-color: var(--green);
+        box-shadow: 0 0 14px var(--green-dim);
+    }
+    .topo-node.error {
+        border-color: var(--red);
+        box-shadow: 0 0 14px var(--red-dim);
+    }
+    .topo-node.pending {
+        border-color: var(--flame);
+        box-shadow: 0 0 14px var(--flame-dim);
+        animation: pendingGlow 1.2s ease-in-out infinite;
+    }
+    @keyframes pendingGlow {
+        0%,100% { box-shadow:0 0 14px var(--flame-dim); }
+        50%      { box-shadow:0 0 28px var(--flame-glow); }
+    }
+    .topo-icon {
+        font-size: 1.5rem;
+        margin-bottom: .3rem;
+        display: block;
+    }
+    .topo-label {
+        font-size: .75rem;
+        font-weight: 700;
+        color: var(--text2);
+        letter-spacing: .02em;
+    }
+    .topo-sub {
+        font-size: .6rem;
+        color: var(--muted);
+        margin-top: .15rem;
+        font-family: var(--font-mono);
+    }
+
+    /* Confidence panel */
+    .confidence-panel {
+        background: linear-gradient(135deg, var(--surface2) 0%, var(--surface3) 100%);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: .75rem 1rem;
+        position: relative;
+        overflow: hidden;
+    }
+    .confidence-panel::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, var(--violet-lt), transparent);
+        opacity: .6;
+    }
+    .cp-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:.6rem; }
+    .cp-title {
+        font-size: .7rem;
+        font-weight: 700;
+        color: var(--violet-lt);
+        letter-spacing: .06em;
+        text-transform: uppercase;
+        display: flex;
+        align-items: center;
+        gap: .4rem;
+    }
+    .cp-live-dot {
+        width: 6px; height: 6px;
+        border-radius: 50%;
+        background: var(--flame);
+        animation: dotPulse .8s infinite;
+    }
+    .cp-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:.5rem; }
+    .cp-item {
+        text-align: center;
+        background: rgba(0,0,0,.2);
+        border-radius: var(--radius-sm);
+        padding: .5rem .3rem;
+        border: 1px solid rgba(255,255,255,.04);
+    }
+    .cp-val { font-size: 1.05rem; font-weight: 800; font-family: var(--font-mono); }
+    .cp-lbl { font-size: .55rem; color: var(--muted); margin-top: 3px; text-transform: uppercase; letter-spacing: .07em; font-weight: 600; }
+    .tier-LOW      { color: var(--green); }
+    .tier-MEDIUM   { color: var(--yellow); }
+    .tier-HIGH     { color: var(--flame); }
+    .tier-CRITICAL { color: var(--red); }
+
+    /* Timeline */
+    .timeline {
+        flex: 1;
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: .75rem 1rem;
+        overflow-y: auto;
+        position: relative;
+    }
+    .tl-header {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+        margin-bottom: .6rem;
+    }
+    .tl-title {
+        font-size: .68rem;
+        font-weight: 700;
+        color: var(--text2);
+        text-transform: uppercase;
+        letter-spacing: .07em;
+    }
+    .tl-event {
+        padding: .4rem .65rem;
+        margin-bottom: .3rem;
+        background: rgba(0,0,0,.25);
+        border-left: 2px solid var(--border);
+        border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+        font-size: .68rem;
+        font-family: var(--font-mono);
+        line-height: 1.5;
+        transition: border-color .2s;
+    }
+    .tl-event.ok   { border-left-color: var(--green);  color: #6EE7B7; }
+    .tl-event.info { border-left-color: var(--violet-lt); color: var(--text2); }
+    .tl-event.warn { border-left-color: var(--flame);  color: var(--flame-lt); }
+    .tl-event.bad  { border-left-color: var(--red);    color: #FCA5A5; }
+    .tl-ts { color: var(--muted); margin-right: .5rem; font-size: .6rem; }
+
+    /* ─── RIGHT PANEL ───────────────────────────────── */
+    .right-panel {
+        background: var(--surface);
+        border-left: 1px solid var(--border);
+        overflow-y: auto;
+        padding: .9rem .85rem;
+        font-size: .78rem;
+        display: flex;
+        flex-direction: column;
+        gap: .85rem;
+    }
+
+    /* Phoenix badge */
+    .phoenix-header {
+        background: linear-gradient(135deg, var(--violet-dim) 0%, var(--flame-dim) 100%);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: .55rem .75rem;
+        display: flex;
+        align-items: center;
+        gap: .6rem;
+    }
+    .phoenix-flame {
+        font-size: 1.1rem;
+        animation: flameFlicker 1.5s ease-in-out infinite alternate;
+    }
+    @keyframes flameFlicker {
+        0%   { transform: scale(1) rotate(-3deg); filter: hue-rotate(0deg); }
+        100% { transform: scale(1.1) rotate(3deg); filter: hue-rotate(20deg); }
+    }
+    .phoenix-label {
+        font-size: .72rem;
+        font-weight: 700;
+        background: linear-gradient(90deg, var(--violet-lt), var(--flame-lt));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        letter-spacing: .04em;
+    }
+    .phoenix-live {
+        margin-left: auto;
+        font-size: .58rem;
+        color: var(--green);
+        font-weight: 700;
+        letter-spacing: .08em;
+        display: flex;
+        align-items: center;
+        gap: .3rem;
+    }
+    .live-dot {
+        width: 5px; height: 5px;
+        border-radius: 50%;
+        background: var(--green);
+        animation: dotPulse .9s infinite;
+    }
+
+    .rp-section {}
+    .rp-title {
+        font-size: .58rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .1em;
+        color: var(--muted);
+        margin-bottom: .35rem;
+    }
+    .rp-box {
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: .55rem .7rem;
+        font-family: var(--font-mono);
+        font-size: .68rem;
+        line-height: 1.6;
+        color: var(--text2);
+        word-break: break-all;
+    }
+    .rp-box a { color: var(--violet-lt); text-decoration: none; }
+    .rp-box a:hover { text-decoration: underline; }
+
+    .factor-list { list-style: none; }
+    .factor-list li {
+        font-size: .66rem;
+        padding: .22rem 0;
+        font-family: var(--font-mono);
+        border-bottom: 1px solid rgba(255,255,255,.03);
+    }
+    .factor-list li:last-child { border-bottom: none; }
+    .factor-list li.warn { color: var(--flame-lt); }
+    .factor-list li.ok   { color: #6EE7B7; }
+
+    .btn-row { display:flex; gap:.45rem; margin-top:.5rem; }
+    .btn-row .btn { flex: 1; }
+
+    .memory-item {
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: .45rem .65rem;
+        margin-bottom: .3rem;
+        position: relative;
+        overflow: hidden;
+    }
+    .memory-item::before {
+        content: '';
+        position: absolute;
+        left: 0; top: 0; bottom: 0;
+        width: 2px;
+    }
+    .memory-item.m-success::before { background: var(--green); }
+    .memory-item.m-partial::before { background: var(--yellow); }
+    .memory-item.m-failed::before  { background: var(--red); }
+    .mi-id      { font-family: var(--font-mono); font-size: .62rem; color: var(--muted); }
+    .mi-outcome { font-size: .62rem; font-weight: 700; float: right; font-family: var(--font-mono); }
+    .mi-outcome.SUCCESS { color: var(--green); }
+    .mi-outcome.PARTIAL { color: var(--yellow); }
+    .mi-outcome.FAILED  { color: var(--red); }
+    .mi-detail  { font-size: .6rem; color: var(--muted); font-family: var(--font-mono); clear:both; margin-top:.15rem; }
+
+    .separator {
+        height: 1px;
+        background: linear-gradient(90deg, transparent, var(--border), transparent);
+    }
+
+    .reasoning-step {
+        font-size: .64rem;
+        padding: .3rem 0;
+        color: var(--muted);
+        font-family: var(--font-mono);
+        border-bottom: 1px solid rgba(255,255,255,.03);
+        line-height: 1.5;
+    }
+    .reasoning-step:last-child { border-bottom: none; }
+    .reasoning-step .step-num {
+        color: var(--violet-lt);
+        font-weight: 700;
+        margin-right: .3rem;
+    }
+
+    /* Eval score */
+    .eval-score-display {
+        display: flex;
+        align-items: center;
+        gap: .6rem;
+    }
+    .eval-grade {
+        width: 32px; height: 32px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, var(--violet) 0%, var(--indigo) 100%);
+        display: flex; align-items: center; justify-content: center;
+        font-size: .85rem;
+        font-weight: 800;
+        color: #fff;
+        flex-shrink: 0;
+    }
+    .eval-text { font-size: .65rem; color: var(--text2); font-family: var(--font-mono); line-height: 1.5; }
     </style>
 </head>
 <body>
 
+<!-- ═══ HEADER ════════════════════════════════════════════════════════════ -->
 <div class="header">
     <div class="brand">
-        <div class="brand-icon">🛡️</div>
-        <div>
+        <div class="brand-logo">🛡️</div>
+        <div class="brand-text">
             <div class="brand-name">SENTINEL</div>
             <div class="brand-sub">Arize Phoenix Track · Google Cloud Rapid Agent Hackathon 2026</div>
         </div>
     </div>
+
     <div class="kpi-bar">
-        <div class="kpi"><div class="kpi-label">System</div><div id="sysHealth" class="kpi-value red">● CRITICAL</div></div>
-        <div class="kpi"><div class="kpi-label">MTTD</div><div id="mttd" class="kpi-value">—</div></div>
-        <div class="kpi"><div class="kpi-label">MTTR</div><div id="mttr" class="kpi-value">—</div></div>
-        <div class="kpi"><div class="kpi-label">Compliance</div><div id="compliance" class="kpi-value">—</div></div>
-        <div class="kpi"><div class="kpi-label">Confidence</div><div id="overallConf" class="kpi-value yellow">—</div></div>
-        <div class="kpi"><div class="kpi-label">Healed</div><div id="healed" class="kpi-value green">0</div></div>
+        <div class="kpi">
+            <div class="kpi-label">System</div>
+            <div id="sysHealth" class="kpi-value red">● CRITICAL</div>
+        </div>
+        <div class="kpi-sep"></div>
+        <div class="kpi">
+            <div class="kpi-label">MTTD</div>
+            <div id="mttd" class="kpi-value">—</div>
+        </div>
+        <div class="kpi">
+            <div class="kpi-label">MTTR</div>
+            <div id="mttr" class="kpi-value">—</div>
+        </div>
+        <div class="kpi-sep"></div>
+        <div class="kpi">
+            <div class="kpi-label">Compliance</div>
+            <div id="compliance" class="kpi-value">—</div>
+        </div>
+        <div class="kpi">
+            <div class="kpi-label">Confidence</div>
+            <div id="overallConf" class="kpi-value flame">—</div>
+        </div>
+        <div class="kpi-sep"></div>
+        <div class="kpi">
+            <div class="kpi-label">Incidents Healed</div>
+            <div id="healed" class="kpi-value green">0</div>
+        </div>
     </div>
+
     <div id="systemBadge" class="system-badge badge-critical">INCIDENT ACTIVE</div>
 </div>
 
+<!-- ═══ WORKSPACE ═════════════════════════════════════════════════════════ -->
 <div class="workspace">
-    <!-- Left Rail -->
+
+    <!-- ── LEFT RAIL ──────────────────────────────────────────────────── -->
     <div class="rail">
         <div class="rail-title">Remediation Pipeline</div>
         <div id="stageCards"></div>
-        <div class="separator"></div>
-        <div class="rail-title">Actions</div>
-        <div style="display:flex;flex-direction:column;gap:.45rem">
-            <button class="btn btn-blue" onclick="triggerHeal()">▶ Trigger Healing Run</button>
-            <button class="btn btn-purple" onclick="triggerSelfImprove()">🔮 Phoenix Self-Improve</button>
-            <button class="btn btn-green" id="approveBtn" style="display:none" onclick="approveStage4()">✓ Approve Stage 4</button>
-            <button class="btn btn-red"   id="rejectBtn"  style="display:none" onclick="rejectStage4()">✕ Reject Stage 4</button>
+
+        <div class="separator" style="margin:.6rem 0"></div>
+
+        <div class="rail-title" style="margin-top:.1rem">Actions</div>
+        <div class="action-group">
+            <button class="btn btn-violet" onclick="triggerHeal()">▶ &nbsp;Trigger Healing Run</button>
+            <button class="btn btn-flame"  onclick="triggerSelfImprove()">🔥 Phoenix Self-Improve</button>
+            <button class="btn btn-ghost-green" id="approveBtn" style="display:none" onclick="approveStage4()">✓ Approve Stage 4</button>
+            <button class="btn btn-ghost-red"   id="rejectBtn"  style="display:none" onclick="rejectStage4()">✕ Reject Stage 4</button>
         </div>
     </div>
 
-    <!-- Center -->
+    <!-- ── CENTER ─────────────────────────────────────────────────────── -->
     <div class="center-pane">
+
+        <!-- Topology -->
         <div class="topo-grid">
-            <div class="topo-node" id="topo-dynatrace"><div class="topo-icon">📊</div><div class="topo-label">Dynatrace</div><div class="topo-sub">Pod Topology</div></div>
-            <div class="topo-node" id="topo-elastic"><div class="topo-icon">📝</div><div class="topo-label">Elastic</div><div class="topo-sub">Error Log Search</div></div>
-            <div class="topo-node" id="topo-gitlab"><div class="topo-icon">🔀</div><div class="topo-label">GitLab</div><div class="topo-sub">Blame + MR</div></div>
-            <div class="topo-node" id="topo-mongodb"><div class="topo-icon">🗄️</div><div class="topo-label">MongoDB</div><div class="topo-sub">Schema Patch</div></div>
-            <div class="topo-node" id="topo-fivetran"><div class="topo-icon">🔄</div><div class="topo-label">Fivetran</div><div class="topo-sub">Downstream Sync</div></div>
-            <div class="topo-node" id="topo-arize"><div class="topo-icon">🧠</div><div class="topo-label">Arize Phoenix</div><div class="topo-sub">Self-Introspection</div></div>
+            <div class="topo-node" id="topo-dynatrace"><span class="topo-icon">📊</span><div class="topo-label">Dynatrace</div><div class="topo-sub">Pod Topology</div></div>
+            <div class="topo-node" id="topo-elastic"><span class="topo-icon">📝</span><div class="topo-label">Elastic</div><div class="topo-sub">Error Log Search</div></div>
+            <div class="topo-node" id="topo-gitlab"><span class="topo-icon">🔀</span><div class="topo-label">GitLab</div><div class="topo-sub">Blame + MR</div></div>
+            <div class="topo-node" id="topo-mongodb"><span class="topo-icon">🗄️</span><div class="topo-label">MongoDB</div><div class="topo-sub">Schema Patch</div></div>
+            <div class="topo-node" id="topo-fivetran"><span class="topo-icon">🔄</span><div class="topo-label">Fivetran</div><div class="topo-sub">Downstream Sync</div></div>
+            <div class="topo-node" id="topo-arize"><span class="topo-icon">🔥</span><div class="topo-label">Arize Phoenix</div><div class="topo-sub">Self-Introspection</div></div>
         </div>
 
+        <!-- Confidence Engine panel -->
         <div class="confidence-panel">
-            <div class="cp-title">🎯 SENTINEL Confidence Engine — Live</div>
+            <div class="cp-header">
+                <div class="cp-title">
+                    <div class="cp-live-dot"></div>
+                    Confidence Engine
+                </div>
+                <span style="font-size:.6rem;color:var(--muted);font-family:var(--font-mono)">powered by Arize Phoenix</span>
+            </div>
             <div class="cp-grid">
                 <div class="cp-item"><div class="cp-val" id="cpScore">—</div><div class="cp-lbl">Confidence</div></div>
                 <div class="cp-item"><div class="cp-val" id="cpTier">—</div><div class="cp-lbl">Risk Tier</div></div>
@@ -174,104 +739,138 @@
             </div>
         </div>
 
+        <!-- Timeline -->
         <div class="timeline">
-            <div class="tl-title">📋 Execution Timeline + Agent Reasoning</div>
+            <div class="tl-header">
+                <div class="cp-live-dot"></div>
+                <div class="tl-title">Execution Timeline &amp; Agent Reasoning</div>
+            </div>
             <div id="timeline"></div>
         </div>
     </div>
 
-    <!-- Right Panel -->
+    <!-- ── RIGHT PANEL ────────────────────────────────────────────────── -->
     <div class="right-panel">
-        <div class="phoenix-badge">🟣 Arize Phoenix MCP — LIVE</div>
+
+        <!-- Phoenix header -->
+        <div class="phoenix-header">
+            <div class="phoenix-flame">🔥</div>
+            <div class="phoenix-label">Arize Phoenix MCP</div>
+            <div class="phoenix-live"><div class="live-dot"></div>LIVE</div>
+        </div>
 
         <div class="rp-section">
             <div class="rp-title">Active Stage</div>
             <div class="rp-box" id="rpStage">Idle — trigger a run</div>
         </div>
+
         <div class="rp-section">
             <div class="rp-title">Error Signature</div>
             <div class="rp-box" id="rpError">—</div>
         </div>
+
         <div class="rp-section">
             <div class="rp-title">Agent Reasoning Chain</div>
-            <div class="rp-box" id="rpReasoning"><span style="color:var(--muted);font-size:.68rem">Reasoning appears during a run.</span></div>
+            <div class="rp-box" id="rpReasoning" style="padding:.5rem .7rem">
+                <div style="color:var(--muted);font-size:.65rem;font-family:var(--font-mono)">Reasoning appears during a run.</div>
+            </div>
         </div>
+
         <div class="rp-section">
             <div class="rp-title">Confidence Factors</div>
-            <ul class="factor-list" id="rpFactors"><li style="color:var(--muted)">No active run.</li></ul>
+            <ul class="factor-list" id="rpFactors">
+                <li style="color:var(--muted)">No active run.</li>
+            </ul>
         </div>
+
         <div class="separator"></div>
+
         <div class="rp-section">
-            <div class="rp-title">Similar Past Incidents (Memory)</div>
+            <div class="rp-title">Similar Past Incidents</div>
             <div id="rpMemory"></div>
         </div>
+
         <div class="rp-section">
             <div class="rp-title">Phoenix Eval Score</div>
-            <div class="rp-box" id="rpEval">—</div>
+            <div id="rpEval" class="rp-box" style="color:var(--muted)">—</div>
         </div>
+
         <div class="separator"></div>
+
         <div class="rp-section">
             <div class="rp-title">Merge Request</div>
             <div class="rp-box"><a id="rpMR" href="#">—</a></div>
             <div class="btn-row" id="approvalRow" style="display:none">
-                <button class="btn btn-green" onclick="approveStage4()">✓ Approve</button>
-                <button class="btn btn-red"   onclick="rejectStage4()">✕ Reject</button>
+                <button class="btn btn-ghost-green" onclick="approveStage4()">✓ Approve</button>
+                <button class="btn btn-ghost-red"   onclick="rejectStage4()">✕ Reject</button>
             </div>
         </div>
+
         <div class="rp-section">
             <div class="rp-title">Outcome Prediction</div>
             <div class="rp-box" id="rpPrediction">—</div>
         </div>
+
     </div>
 </div>
 
 <script>
+// ── Data ────────────────────────────────────────────────────────────────────
 const STAGES = [
     {id:'stage1_ingest',           label:'Dynatrace', icon:'📊', topo:'dynatrace'},
     {id:'stage2_logs',             label:'Elastic',   icon:'📝', topo:'elastic'},
     {id:'stage3_git_remediation',  label:'GitLab',    icon:'🔀', topo:'gitlab'},
     {id:'stage4_db_stabilize',     label:'MongoDB',   icon:'🗄️', topo:'mongodb'},
     {id:'stage5_downstream_align', label:'Fivetran',  icon:'🔄', topo:'fivetran'},
-    {id:'stage6_cognitive_assess', label:'Arize',     icon:'🧠', topo:'arize'},
+    {id:'stage6_cognitive_assess', label:'Arize',     icon:'🔥', topo:'arize'},
 ];
 const CD = [
-    {score:.94, tier:'LOW',    action:'AUTO_HEAL',        drift:.04, factors:['✓ All indicators green']},
+    {score:.94, tier:'LOW',    action:'AUTO_HEAL',        drift:.04, factors:['✓ All confidence indicators green']},
     {score:.91, tier:'LOW',    action:'AUTO_HEAL',        drift:.06, factors:['✓ 6/6 similar incidents resolved']},
     {score:.87, tier:'MEDIUM', action:'AUTO_HEAL',        drift:.09, factors:['✓ Known error signature','⚠ 2 partial resolutions in memory']},
-    {score:.68, tier:'MEDIUM', action:'REQUEST_APPROVAL', drift:.18, factors:['⚠ Schema change affects 48K records','⚠ Drift signal elevated']},
-    {score:.88, tier:'LOW',    action:'AUTO_HEAL',        drift:.05, factors:['✓ Downstream sync successful in all prior runs']},
+    {score:.68, tier:'MEDIUM', action:'REQUEST_APPROVAL', drift:.18, factors:['⚠ Schema change affects 48,312 records','⚠ Drift signal elevated above 0.15']},
+    {score:.88, tier:'LOW',    action:'AUTO_HEAL',        drift:.05, factors:['✓ All 5 prior resyncs on this connector succeeded']},
     {score:.96, tier:'LOW',    action:'AUTO_HEAL',        drift:.03, factors:['✓ Arize compliance=0.97','✓ Trace saved to golden dataset']},
 ];
 const REASONING = [
-    ['Queried Dynatrace topology — pod k8s-pod-x92-node4 flagged.','Cross-referenced last 8 Phoenix traces for this service.','Confidence: 0.94 (LOW risk) → AUTO_HEAL.'],
-    ['Searched Elastic for BSONType errors in last 30m.','Found match at src/payments/processor.py:243.','No drift spike. Confidence: 0.91 → AUTO_HEAL.'],
-    ['Ran git blame — commit fa83b2cc identified.','Searched Phoenix for this commit sha in past traces.','Found 3 prior fixes using same hotfix branch pattern. Confidence: 0.87 → AUTO_HEAL.'],
-    ['collMod targets 48,312 documents.','Phoenix drift signal = 0.18 (above threshold 0.15).','Confidence engine: 0.68 (MEDIUM, DB stage) → REQUEST_APPROVAL.'],
-    ['Fivetran connector config validated against schema patch.','Triggered resync — all 5 prior resyncs on this connector succeeded.','Confidence: 0.88 → AUTO_HEAL.'],
-    ['Ingested full audit trail to Phoenix (6 spans).','LLM-as-a-Judge eval score: 0.96 (grade A).','Trace promoted to sentinel_golden_traces dataset. Self-improvement loop complete.'],
+    ['1. Queried Dynatrace topology — pod k8s-pod-x92-node4 flagged.','2. Cross-referenced last 8 Phoenix traces for this service.','3. Confidence 0.94 (LOW risk) → AUTO_HEAL.'],
+    ['1. Searched Elastic for BSONType errors in last 30m.','2. Found match at src/payments/processor.py:243.','3. No drift spike. Confidence 0.91 → AUTO_HEAL.'],
+    ['1. Ran git blame — commit fa83b2cc identified.','2. Searched Phoenix spans for this commit sha.','3. 3 prior fixes with same branch pattern. Confidence 0.87 → AUTO_HEAL.'],
+    ['1. collMod targets 48,312 documents.','2. Phoenix drift signal = 0.18 (threshold 0.15).','3. Confidence engine: 0.68 (MEDIUM, DB stage) → REQUEST_APPROVAL.'],
+    ['1. Fivetran connector validated against schema patch.','2. All 5 prior resyncs on this connector succeeded.','3. Confidence 0.88 → AUTO_HEAL.'],
+    ['1. Ingested full audit trail to Phoenix (6 spans).','2. LLM-as-a-Judge eval score: 0.96 (grade A).','3. Trace promoted to sentinel_golden_traces. Loop complete.'],
 ];
 const MEMORY_ROWS = [
     {id:'a1b2c3d4', error:'BSONType mismatch', outcome:'SUCCESS', compliance:0.97},
     {id:'e5f6a7b8', error:'BSONType mismatch', outcome:'SUCCESS', compliance:0.95},
     {id:'c9d0e1f2', error:'schema_drift',       outcome:'PARTIAL', compliance:0.81},
 ];
-const STAGE_RUNNING = ['Querying Dynatrace topology…','Searching Elastic logs…','Running git blame + creating hotfix MR…','Schema change staged — awaiting operator approval…','Adjusting Fivetran connector + triggering resync…','Ingesting traces to Phoenix · Running LLM-as-a-Judge eval…'];
-const STAGE_OK      = ['Topology OK — pod k8s-pod-x92-node4','Error matched at processor.py:243','MR#42 opened — hotfix/auto/2026-06-11','collMod applied · 48K docs quarantined','Resync triggered — status=syncing','Compliance=0.97 · Trace saved to golden dataset'];
+const STAGE_RUN = ['Querying Dynatrace topology…','Searching Elastic logs…','Running git blame + creating hotfix MR…','Schema change staged — awaiting operator approval…','Adjusting Fivetran connector + triggering resync…','Ingesting traces to Phoenix · LLM-as-a-Judge eval…'];
+const STAGE_OK  = ['Topology OK — pod k8s-pod-x92-node4','Error matched at processor.py:243','MR#42 opened — hotfix/auto/2026-06-11','collMod applied · 48K docs quarantined','Resync triggered — status=syncing','Compliance=0.97 · Trace → golden dataset'];
 
 let healCount=0, runActive=false, approvalPending=false;
 
-function initCards() {
+// ── Init stage cards ─────────────────────────────────────────────────────────
+function initCards(){
     const c=document.getElementById('stageCards');
     STAGES.forEach((s,i)=>{
         const el=document.createElement('div');
         el.className='stage-card'; el.id='sc-'+s.id;
-        el.innerHTML=`<div class="sc-top"><div class="sc-dot idle" id="dot-${s.id}"></div><span class="sc-name">${i+1}. ${s.icon} ${s.label}</span></div><div class="sc-msg" id="msg-${s.id}">idle</div><div class="confidence-bar"><div class="confidence-fill" id="cf-${s.id}" style="width:0%;background:var(--muted)"></div></div>`;
+        el.innerHTML=`
+            <div class="sc-top">
+                <div class="sc-dot idle" id="dot-${s.id}"></div>
+                <span class="sc-name">${i+1}. ${s.icon}&nbsp; ${s.label}</span>
+            </div>
+            <div class="sc-msg" id="msg-${s.id}">idle</div>
+            <div class="confidence-bar"><div class="confidence-fill" id="cf-${s.id}" style="width:0%;background:var(--muted)"></div></div>`;
         c.appendChild(el);
     });
 }
-function setDot(sid,st){const d=document.getElementById('dot-'+sid);if(d)d.className='sc-dot '+st;}
-function setMsg(sid,t){const m=document.getElementById('msg-'+sid);if(m)m.textContent=t;}
-function setTopo(tid,cls){const t=document.getElementById('topo-'+tid);if(t)t.className='topo-node '+cls;}
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function setDot(sid,st){ const d=document.getElementById('dot-'+sid); if(d)d.className='sc-dot '+st; }
+function setMsg(sid,t) { const m=document.getElementById('msg-'+sid); if(m)m.textContent=t; }
+function setTopo(tid,cls){ const t=document.getElementById('topo-'+tid); if(t)t.className='topo-node '+cls; }
 function addTL(msg,lvl){
     const tl=document.getElementById('timeline');
     const ts=new Date().toLocaleTimeString('en-US',{hour12:false});
@@ -282,13 +881,14 @@ function addTL(msg,lvl){
 }
 function updateConf(idx){
     const cd=CD[idx]||{};
-    document.getElementById('cpScore').textContent=cd.score?(cd.score*100).toFixed(0)+'%':'—';
-    document.getElementById('cpDrift').textContent=cd.drift?cd.drift.toFixed(2):'—';
-    const te=document.getElementById('cpTier'); te.textContent=cd.tier||'—'; te.className='cp-val tier-'+(cd.tier||'');
-    document.getElementById('cpAction').textContent=(cd.action||'—').replace(/_/g,' ');
-    document.getElementById('overallConf').textContent=cd.score?(cd.score*100).toFixed(0)+'%':'—';
+    document.getElementById('cpScore').textContent   = cd.score?(cd.score*100).toFixed(0)+'%':'—';
+    document.getElementById('cpDrift').textContent   = cd.drift?cd.drift.toFixed(2):'—';
+    const te=document.getElementById('cpTier');
+    te.textContent=cd.tier||'—'; te.className='cp-val tier-'+(cd.tier||'');
+    document.getElementById('cpAction').textContent  = (cd.action||'—').replace(/_/g,' ');
+    document.getElementById('overallConf').textContent = cd.score?(cd.score*100).toFixed(0)+'%':'—';
     const pct=cd.score?cd.score*100:0;
-    const color=pct>=85?'var(--green)':pct>=65?'var(--yellow)':pct>=40?'var(--orange)':'var(--red)';
+    const color=pct>=85?'var(--green)':pct>=65?'var(--yellow)':pct>=40?'var(--flame)':'var(--red)';
     const fill=document.getElementById('cf-'+STAGES[idx].id);
     if(fill){fill.style.width=pct+'%';fill.style.background=color;}
     const fl=document.getElementById('rpFactors');
@@ -296,22 +896,35 @@ function updateConf(idx){
 }
 function updateReasoning(idx){
     const steps=REASONING[idx]||[];
-    document.getElementById('rpReasoning').innerHTML=steps.map(s=>`<div class="reasoning-step">${s}</div>`).join('');
+    document.getElementById('rpReasoning').innerHTML=steps.map(s=>{
+        const num=s.match(/^(\d+)\./);
+        const body=num?s.replace(/^\d+\.\s*/,''):s;
+        return `<div class="reasoning-step">${num?`<span class="step-num">${num[1]}.</span>`:''} ${body}</div>`;
+    }).join('');
 }
 function updateMemory(){
-    document.getElementById('rpMemory').innerHTML=MEMORY_ROWS.map(r=>
-        `<div class="memory-item"><span style="color:var(--muted)">#${r.id}</span><span class="mi-outcome ${r.outcome}" style="float:right">${r.outcome}</span><br><span style="font-size:.62rem;color:var(--muted)">${r.error} · compliance=${r.compliance}</span></div>`
-    ).join('');
+    document.getElementById('rpMemory').innerHTML=MEMORY_ROWS.map(r=>{
+        const cls=r.outcome==='SUCCESS'?'m-success':r.outcome==='PARTIAL'?'m-partial':'m-failed';
+        return `<div class="memory-item ${cls}">
+            <span class="mi-id">#${r.id}</span>
+            <span class="mi-outcome ${r.outcome}">${r.outcome}</span>
+            <div class="mi-detail">${r.error} · compliance=${r.compliance}</div>
+        </div>`;
+    }).join('');
 }
 
+// ── Main heal ────────────────────────────────────────────────────────────────
 function triggerHeal(){
     if(runActive)return;
     runActive=true;
     document.getElementById('timeline').innerHTML='';
-    STAGES.forEach(s=>{setDot(s.id,'idle');setMsg(s.id,'idle');setTopo(s.topo,'');const f=document.getElementById('cf-'+s.id);if(f){f.style.width='0%';f.style.background='var(--muted)';}});
-    document.getElementById('mttd').textContent='—';
-    document.getElementById('mttr').textContent='—';
-    document.getElementById('compliance').textContent='—';
+    STAGES.forEach(s=>{
+        setDot(s.id,'idle'); setMsg(s.id,'idle'); setTopo(s.topo,'');
+        document.getElementById('sc-'+s.id).className='stage-card';
+        const f=document.getElementById('cf-'+s.id);
+        if(f){f.style.width='0%';f.style.background='var(--muted)';}
+    });
+    ['mttd','mttr','compliance'].forEach(id=>document.getElementById(id).textContent='—');
     document.getElementById('sysHealth').textContent='● HEALING';
     document.getElementById('sysHealth').className='kpi-value';
     document.getElementById('systemBadge').textContent='AUTO-HEALING';
@@ -327,17 +940,19 @@ function triggerHeal(){
 function runStage(idx){
     if(idx>=STAGES.length){finalize();return;}
     const s=STAGES[idx];
-    setDot(s.id,'running'); setMsg(s.id,STAGE_RUNNING[idx]); setTopo(s.topo,'active');
+    setDot(s.id,'running'); setMsg(s.id,STAGE_RUN[idx]); setTopo(s.topo,'active');
     document.getElementById('sc-'+s.id).classList.add('active');
     document.getElementById('rpStage').textContent=`Stage ${idx+1}: ${s.label}`;
     updateConf(idx); updateReasoning(idx);
-    addTL(`Stage ${idx+1} [${s.label}] — ${STAGE_RUNNING[idx]}`,'info');
+    addTL(`Stage ${idx+1} [${s.label}] — ${STAGE_RUN[idx]}`,'info');
+
     if(idx===3){
         setTimeout(()=>{
             setDot(s.id,'awaiting_approval'); setMsg(s.id,'awaiting operator approval'); setTopo(s.topo,'pending');
+            document.getElementById('sc-'+s.id).classList.add('stage-waiting');
             approvalPending=true;
-            document.getElementById('approveBtn').style.display='block';
-            document.getElementById('rejectBtn').style.display='block';
+            document.getElementById('approveBtn').style.display='flex';
+            document.getElementById('rejectBtn').style.display='flex';
             document.getElementById('approvalRow').style.display='flex';
             document.getElementById('rpMR').textContent='https://gitlab.com/org/repo/-/merge_requests/42';
             addTL('Stage 4 requires operator approval — MongoDB collMod staged.','warn');
@@ -346,6 +961,7 @@ function runStage(idx){
     setTimeout(()=>{
         setDot(s.id,'success'); setMsg(s.id,STAGE_OK[idx]); setTopo(s.topo,'success');
         document.getElementById('sc-'+s.id).classList.remove('active');
+        document.getElementById('sc-'+s.id).classList.add('stage-success');
         addTL(`✓ Stage ${idx+1} [${s.label}] — ${STAGE_OK[idx]}`,'ok');
         runStage(idx+1);
     },950);
@@ -356,11 +972,13 @@ function approveStage4(){
     approvalPending=false;
     ['approveBtn','rejectBtn'].forEach(id=>document.getElementById(id).style.display='none');
     document.getElementById('approvalRow').style.display='none';
+    const sc=document.getElementById('sc-'+STAGES[3].id);
+    sc.classList.remove('stage-waiting'); sc.classList.add('active');
     setDot(STAGES[3].id,'running'); setMsg(STAGES[3].id,'Applying collMod…');
     addTL('Operator approved Stage 4 — applying collMod.','info');
     setTimeout(()=>{
         setDot(STAGES[3].id,'success'); setMsg(STAGES[3].id,STAGE_OK[3]); setTopo(STAGES[3].topo,'success');
-        document.getElementById('sc-'+STAGES[3].id).classList.remove('active');
+        sc.classList.remove('active'); sc.classList.add('stage-success');
         addTL(`✓ Stage 4 [MongoDB] — ${STAGE_OK[3]}`,'ok');
         runStage(4);
     },700);
@@ -371,6 +989,8 @@ function rejectStage4(){
     approvalPending=false;
     ['approveBtn','rejectBtn'].forEach(id=>document.getElementById(id).style.display='none');
     document.getElementById('approvalRow').style.display='none';
+    const sc=document.getElementById('sc-'+STAGES[3].id);
+    sc.classList.remove('stage-waiting'); sc.classList.add('stage-failed');
     setDot(STAGES[3].id,'failed'); setMsg(STAGES[3].id,'Rejected by operator'); setTopo(STAGES[3].topo,'error');
     addTL('✕ Operator rejected Stage 4 — run aborted.','bad');
     document.getElementById('sysHealth').textContent='● REJECTED';
@@ -389,8 +1009,8 @@ function finalize(){
     document.getElementById('sysHealth').className='kpi-value green';
     document.getElementById('systemBadge').textContent='HEALED';
     document.getElementById('systemBadge').className='system-badge badge-healthy';
-    document.getElementById('rpEval').textContent='Score: 0.96 (A) — Agent correctly identified BSONType mismatch and applied minimal-invasive collMod. Trace saved to sentinel_golden_traces.';
-    addTL('🎯 SENTINEL healing loop complete. Trace promoted to Phoenix golden dataset.','ok');
+    document.getElementById('rpEval').innerHTML=`<div class="eval-score-display"><div class="eval-grade">A</div><div class="eval-text">Score: 0.96 — Agent correctly identified BSONType mismatch and applied minimal-invasive collMod without data loss.<br>Trace saved to <strong>sentinel_golden_traces</strong>.</div></div>`;
+    addTL('🔥 SENTINEL healing loop complete. Trace promoted to Phoenix golden dataset.','ok');
     runActive=false;
     setTimeout(()=>{
         document.getElementById('sysHealth').textContent='● CRITICAL';
@@ -401,7 +1021,7 @@ function finalize(){
 }
 
 function triggerSelfImprove(){
-    addTL('🔮 Phoenix self-improve triggered — querying last 20 traces…','info');
+    addTL('🔥 Phoenix self-improve triggered — querying last 20 traces…','info');
     setTimeout(()=>{
         addTL('Phoenix eval avg: 0.94 — above threshold. No prompt update needed.','ok');
         addTL('✓ 3 traces promoted to sentinel_golden_traces dataset.','ok');
