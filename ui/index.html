@@ -3,482 +3,413 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PROJECT METACOGNITION — SRE Control Cockpit</title>
+    <title>SENTINEL · Arize Phoenix Track · SRE Cockpit</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg:#0A0E17; --surface:#111827; --surface2:#1A2235;
+            --border:#1F2D45; --blue:#3B82F6; --blue-glow:rgba(59,130,246,0.25);
+            --green:#10B981; --yellow:#F59E0B; --orange:#F97316;
+            --red:#EF4444; --purple:#8B5CF6; --text:#E2E8F0; --muted:#64748B;
+            --font:'JetBrains Mono','Courier New',monospace;
         }
+        body { font-family:var(--font); background:var(--bg); color:var(--text); height:100vh; overflow:hidden; display:flex; flex-direction:column; }
 
-        body {
-            font-family: 'JetBrains Mono', 'Courier New', monospace;
-            background-color: #0E1117;
-            color: #C9D1D9;
-            line-height: 1.6;
-        }
+        /* Header */
+        .header { background:var(--surface); border-bottom:1px solid var(--border); padding:.75rem 1.5rem; display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-shrink:0; }
+        .brand { display:flex; align-items:center; gap:.75rem; }
+        .brand-icon { font-size:1.4rem; }
+        .brand-name { font-size:1.15rem; font-weight:700; color:var(--blue); letter-spacing:.05em; }
+        .brand-sub  { font-size:.7rem; color:var(--muted); margin-top:1px; }
+        .kpi-bar { display:flex; gap:1.5rem; align-items:center; }
+        .kpi { text-align:center; }
+        .kpi-label { font-size:.6rem; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; }
+        .kpi-value { font-size:1rem; font-weight:700; color:var(--blue); }
+        .kpi-value.green  { color:var(--green); }
+        .kpi-value.yellow { color:var(--yellow); }
+        .kpi-value.red    { color:var(--red); }
+        .system-badge { padding:.3rem .75rem; border-radius:9999px; font-size:.72rem; font-weight:700; letter-spacing:.05em; }
+        .badge-critical { background:rgba(239,68,68,.15); color:var(--red);   border:1px solid var(--red); }
+        .badge-healthy  { background:rgba(16,185,129,.15); color:var(--green); border:1px solid var(--green); }
+        .badge-healing  { background:rgba(59,130,246,.15); color:var(--blue);  border:1px solid var(--blue); }
 
-        .header {
-            background-color: #161B22;
-            border-bottom: 2px solid #30363D;
-            padding: 1.5rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+        /* Layout */
+        .workspace { display:grid; grid-template-columns:260px 1fr 320px; flex:1; overflow:hidden; }
 
-        .header-title {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #58A6FF;
-        }
+        /* Rail */
+        .rail { background:var(--surface); border-right:1px solid var(--border); overflow-y:auto; padding:1rem .75rem; }
+        .rail-title { font-size:.62rem; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; margin-bottom:.75rem; padding-left:.25rem; }
+        .stage-card { background:var(--surface2); border:1px solid var(--border); border-radius:6px; padding:.65rem .75rem; margin-bottom:.5rem; cursor:pointer; transition:border-color .2s,box-shadow .2s; }
+        .stage-card:hover,.stage-card.active { border-color:var(--blue); box-shadow:0 0 8px var(--blue-glow); }
+        .sc-top { display:flex; align-items:center; gap:.6rem; margin-bottom:.3rem; }
+        .sc-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+        .sc-dot.idle    { background:var(--muted); }
+        .sc-dot.running { background:var(--yellow); animation:pulse .9s infinite; }
+        .sc-dot.success { background:var(--green); }
+        .sc-dot.failed  { background:var(--red); }
+        .sc-dot.awaiting_approval { background:var(--orange); animation:pulse 1.2s infinite; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+        .sc-name { font-size:.8rem; font-weight:700; }
+        .sc-msg  { font-size:.68rem; color:var(--muted); padding-left:1.6rem; }
+        .confidence-bar { height:3px; border-radius:2px; background:var(--border); margin-top:.45rem; overflow:hidden; }
+        .confidence-fill { height:100%; border-radius:2px; transition:width .6s ease; }
 
-        .header-metrics {
-            display: flex;
-            gap: 2rem;
-            font-size: 0.9rem;
-        }
+        /* Center */
+        .center-pane { display:flex; flex-direction:column; overflow:hidden; padding:1rem; gap:.75rem; }
+        .topo-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:.75rem; }
+        .topo-node { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:1rem; text-align:center; transition:border-color .3s,box-shadow .3s; }
+        .topo-node.active  { border-color:var(--blue);  box-shadow:0 0 12px var(--blue-glow); }
+        .topo-node.success { border-color:var(--green); box-shadow:0 0 8px rgba(16,185,129,.2); }
+        .topo-node.error   { border-color:var(--red);   box-shadow:0 0 8px rgba(239,68,68,.2); }
+        .topo-node.pending { border-color:var(--yellow); }
+        .topo-icon  { font-size:1.6rem; margin-bottom:.35rem; }
+        .topo-label { font-size:.8rem; font-weight:700; color:var(--blue); }
+        .topo-sub   { font-size:.62rem; color:var(--muted); margin-top:.2rem; }
 
-        .metric {
-            display: flex;
-            flex-direction: column;
-        }
+        .confidence-panel { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:.9rem 1rem; }
+        .cp-title { font-size:.72rem; font-weight:700; color:var(--blue); margin-bottom:.6rem; letter-spacing:.05em; }
+        .cp-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:.5rem; }
+        .cp-item { text-align:center; }
+        .cp-val { font-size:1.1rem; font-weight:700; }
+        .cp-lbl { font-size:.58rem; color:var(--muted); margin-top:2px; }
+        .tier-LOW      { color:var(--green); }
+        .tier-MEDIUM   { color:var(--yellow); }
+        .tier-HIGH     { color:var(--orange); }
+        .tier-CRITICAL { color:var(--red); }
 
-        .metric-label {
-            color: #8B949E;
-            font-size: 0.8rem;
-        }
+        .timeline { flex:1; background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:.9rem 1rem; overflow-y:auto; }
+        .tl-title { font-size:.72rem; font-weight:700; color:var(--blue); margin-bottom:.6rem; }
+        .tl-event { padding:.45rem .65rem; margin-bottom:.35rem; background:rgba(0,0,0,.25); border-left:3px solid var(--border); border-radius:0 4px 4px 0; font-size:.7rem; }
+        .tl-event.ok   { border-left-color:var(--green);  color:var(--green); }
+        .tl-event.info { border-left-color:var(--blue);   color:#93C5FD; }
+        .tl-event.warn { border-left-color:var(--yellow); color:var(--yellow); }
+        .tl-event.bad  { border-left-color:var(--red);    color:var(--red); }
+        .tl-ts { color:var(--muted); font-size:.62rem; margin-right:.4rem; }
 
-        .metric-value {
-            color: #79C0FF;
-            font-weight: bold;
-        }
-
-        .container {
-            display: flex;
-            height: calc(100vh - 80px);
-        }
-
-        .left-rail {
-            width: 300px;
-            background-color: #0D1117;
-            border-right: 1px solid #30363D;
-            padding: 1rem;
-            overflow-y: auto;
-        }
-
-        .stage-node {
-            padding: 1rem;
-            margin-bottom: 0.8rem;
-            background-color: #161B22;
-            border: 1px solid #30363D;
-            border-radius: 4px;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .stage-node:hover {
-            background-color: #1C2128;
-            border-color: #58A6FF;
-        }
-
-        .status-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            flex-shrink: 0;
-        }
-
-        .status-dot.idle {
-            background-color: #6E7681;
-        }
-
-        .status-dot.running {
-            background-color: #FFA657;
-            animation: pulse 1s infinite;
-        }
-
-        .status-dot.success {
-            background-color: #3FB950;
-        }
-
-        .status-dot.error {
-            background-color: #FF3B30;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        .stage-name {
-            font-size: 0.9rem;
-            font-weight: bold;
-        }
-
-        .center {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            padding: 1.5rem;
-            overflow-y: auto;
-        }
-
-        .topology-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 2rem;
-            margin-bottom: 2rem;
-        }
-
-        .topology-node {
-            background-color: #161B22;
-            border: 1px solid #30363D;
-            border-radius: 8px;
-            padding: 1.5rem;
-            text-align: center;
-            position: relative;
-            min-height: 120px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            transition: all 0.3s ease;
-        }
-
-        .topology-node.active {
-            border-color: #58A6FF;
-            box-shadow: 0 0 10px rgba(88, 166, 255, 0.3);
-        }
-
-        .topology-node.success {
-            border-color: #3FB950;
-            box-shadow: 0 0 10px rgba(63, 185, 80, 0.3);
-        }
-
-        .topology-node.error {
-            border-color: #FF3B30;
-            box-shadow: 0 0 10px rgba(255, 59, 48, 0.3);
-        }
-
-        .node-icon {
-            font-size: 2rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .node-label {
-            font-size: 0.85rem;
-            font-weight: bold;
-            color: #79C0FF;
-        }
-
-        .node-status {
-            font-size: 0.75rem;
-            color: #8B949E;
-            margin-top: 0.5rem;
-        }
-
-        .timeline {
-            background-color: #161B22;
-            border: 1px solid #30363D;
-            border-radius: 8px;
-            padding: 1.5rem;
-            flex: 1;
-            overflow-y: auto;
-        }
-
-        .timeline-title {
-            font-size: 1rem;
-            font-weight: bold;
-            color: #79C0FF;
-            margin-bottom: 1rem;
-        }
-
-        .timeline-event {
-            padding: 0.8rem;
-            margin-bottom: 0.6rem;
-            background-color: #0D1117;
-            border-left: 3px solid #30363D;
-            border-radius: 4px;
-            font-size: 0.85rem;
-        }
-
-        .timeline-event.success {
-            border-left-color: #3FB950;
-            color: #3FB950;
-        }
-
-        .timeline-event.running {
-            border-left-color: #FFA657;
-            color: #FFA657;
-        }
-
-        .timeline-event.error {
-            border-left-color: #FF3B30;
-            color: #FF3B30;
-        }
-
-        .right-panel {
-            width: 350px;
-            background-color: #0D1117;
-            border-left: 1px solid #30363D;
-            padding: 1rem;
-            overflow-y: auto;
-            font-size: 0.85rem;
-        }
-
-        .panel-section {
-            margin-bottom: 1.5rem;
-        }
-
-        .panel-title {
-            font-weight: bold;
-            color: #79C0FF;
-            margin-bottom: 0.5rem;
-            font-size: 0.9rem;
-        }
-
-        .panel-content {
-            background-color: #161B22;
-            border: 1px solid #30363D;
-            border-radius: 4px;
-            padding: 0.8rem;
-            word-break: break-all;
-            color: #C9D1D9;
-        }
-
-        .action-buttons {
-            display: flex;
-            gap: 0.5rem;
-            margin-top: 0.5rem;
-        }
-
-        .btn {
-            flex: 1;
-            padding: 0.6rem;
-            border: none;
-            border-radius: 4px;
-            font-family: inherit;
-            font-size: 0.8rem;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .btn-primary {
-            background-color: #238636;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background-color: #2EA043;
-        }
-
-        .btn-secondary {
-            background-color: #30363D;
-            color: #C9D1D9;
-        }
-
-        .btn-secondary:hover {
-            background-color: #3D444D;
-        }
-
-        .health-status {
-            font-size: 1.2rem;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .health-status.critical {
-            color: #FF3B30;
-        }
-
-        .health-status.warning {
-            color: #FFA657;
-        }
-
-        .health-status.healthy {
-            color: #3FB950;
-        }
-
-        .separator {
-            height: 1px;
-            background-color: #30363D;
-            margin: 1rem 0;
-        }
+        /* Right panel */
+        .right-panel { background:var(--surface); border-left:1px solid var(--border); overflow-y:auto; padding:1rem; font-size:.78rem; }
+        .rp-section { margin-bottom:1.1rem; }
+        .rp-title { font-size:.6rem; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); margin-bottom:.4rem; }
+        .rp-box { background:var(--surface2); border:1px solid var(--border); border-radius:6px; padding:.6rem .75rem; word-break:break-all; line-height:1.6; }
+        .rp-box a { color:var(--blue); text-decoration:none; }
+        .factor-list { list-style:none; }
+        .factor-list li { font-size:.68rem; padding:.22rem 0; }
+        .factor-list li.warn { color:var(--yellow); }
+        .factor-list li.ok   { color:var(--green); }
+        .btn-row { display:flex; gap:.5rem; margin-top:.6rem; }
+        .btn { flex:1; padding:.5rem; border:none; border-radius:6px; font-family:var(--font); font-size:.72rem; font-weight:700; cursor:pointer; transition:all .2s; letter-spacing:.04em; }
+        .btn-green  { background:rgba(16,185,129,.2);  color:var(--green);  border:1px solid var(--green); }
+        .btn-green:hover  { background:rgba(16,185,129,.35); }
+        .btn-red    { background:rgba(239,68,68,.15);   color:var(--red);    border:1px solid var(--red); }
+        .btn-red:hover    { background:rgba(239,68,68,.3); }
+        .btn-blue   { background:rgba(59,130,246,.15);  color:var(--blue);   border:1px solid var(--blue); }
+        .btn-blue:hover   { background:rgba(59,130,246,.3); }
+        .btn-purple { background:rgba(139,92,246,.15);  color:var(--purple); border:1px solid var(--purple); }
+        .btn-purple:hover { background:rgba(139,92,246,.3); }
+        .memory-item { background:var(--surface2); border:1px solid var(--border); border-radius:5px; padding:.45rem .65rem; margin-bottom:.35rem; font-size:.68rem; }
+        .mi-outcome.SUCCESS { color:var(--green); }
+        .mi-outcome.PARTIAL { color:var(--yellow); }
+        .mi-outcome.FAILED  { color:var(--red); }
+        .separator { height:1px; background:var(--border); margin:.75rem 0; }
+        .reasoning-step { font-size:.68rem; padding:.28rem 0; color:var(--muted); border-bottom:1px solid var(--border); }
+        .reasoning-step:last-child { border-bottom:none; }
+        .reasoning-step strong { color:var(--text); }
+        .phoenix-badge { display:inline-flex; align-items:center; gap:.3rem; background:rgba(139,92,246,.15); border:1px solid rgba(139,92,246,.4); border-radius:4px; padding:.2rem .5rem; font-size:.62rem; color:var(--purple); margin-bottom:.6rem; }
     </style>
 </head>
 <body>
-    <div class="header">
+
+<div class="header">
+    <div class="brand">
+        <div class="brand-icon">🛡️</div>
         <div>
-            <div class="header-title">PROJECT METACOGNITION // ENTERPRISE AUTONOMOUS SRE COCKPIT</div>
+            <div class="brand-name">SENTINEL</div>
+            <div class="brand-sub">Arize Phoenix Track · Google Cloud Rapid Agent Hackathon 2026</div>
         </div>
-        <div class="header-metrics">
-            <div class="metric">
-                <div class="metric-label">SYSTEM HEALTH</div>
-                <div id="systemHealth" class="health-status critical">● CRITICAL</div>
-            </div>
-            <div class="metric">
-                <div class="metric-label">MTTD</div>
-                <div class="metric-value" id="mttd">0.12s</div>
-            </div>
-            <div class="metric">
-                <div class="metric-label">MTTR</div>
-                <div class="metric-value" id="mttr">11.42s</div>
-            </div>
+    </div>
+    <div class="kpi-bar">
+        <div class="kpi"><div class="kpi-label">System</div><div id="sysHealth" class="kpi-value red">● CRITICAL</div></div>
+        <div class="kpi"><div class="kpi-label">MTTD</div><div id="mttd" class="kpi-value">—</div></div>
+        <div class="kpi"><div class="kpi-label">MTTR</div><div id="mttr" class="kpi-value">—</div></div>
+        <div class="kpi"><div class="kpi-label">Compliance</div><div id="compliance" class="kpi-value">—</div></div>
+        <div class="kpi"><div class="kpi-label">Confidence</div><div id="overallConf" class="kpi-value yellow">—</div></div>
+        <div class="kpi"><div class="kpi-label">Healed</div><div id="healed" class="kpi-value green">0</div></div>
+    </div>
+    <div id="systemBadge" class="system-badge badge-critical">INCIDENT ACTIVE</div>
+</div>
+
+<div class="workspace">
+    <!-- Left Rail -->
+    <div class="rail">
+        <div class="rail-title">Remediation Pipeline</div>
+        <div id="stageCards"></div>
+        <div class="separator"></div>
+        <div class="rail-title">Actions</div>
+        <div style="display:flex;flex-direction:column;gap:.45rem">
+            <button class="btn btn-blue" onclick="triggerHeal()">▶ Trigger Healing Run</button>
+            <button class="btn btn-purple" onclick="triggerSelfImprove()">🔮 Phoenix Self-Improve</button>
+            <button class="btn btn-green" id="approveBtn" style="display:none" onclick="approveStage4()">✓ Approve Stage 4</button>
+            <button class="btn btn-red"   id="rejectBtn"  style="display:none" onclick="rejectStage4()">✕ Reject Stage 4</button>
         </div>
     </div>
 
-    <div class="container">
-        <div class="left-rail">
-            <div class="stage-node">
-                <div class="status-dot running"></div>
-                <div class="stage-name">[1. DYNATRACE]</div>
-            </div>
-            <div class="stage-node">
-                <div class="status-dot running"></div>
-                <div class="stage-name">[2. ELASTIC]</div>
-            </div>
-            <div class="stage-node">
-                <div class="status-dot running"></div>
-                <div class="stage-name">[3. GITLAB]</div>
-            </div>
-            <div class="stage-node">
-                <div class="status-dot idle"></div>
-                <div class="stage-name">[4. MONGODB]</div>
-            </div>
-            <div class="stage-node">
-                <div class="status-dot idle"></div>
-                <div class="stage-name">[5. FIVETRAN]</div>
-            </div>
-            <div class="stage-node">
-                <div class="status-dot idle"></div>
-                <div class="stage-name">[6. ARIZE]</div>
+    <!-- Center -->
+    <div class="center-pane">
+        <div class="topo-grid">
+            <div class="topo-node" id="topo-dynatrace"><div class="topo-icon">📊</div><div class="topo-label">Dynatrace</div><div class="topo-sub">Pod Topology</div></div>
+            <div class="topo-node" id="topo-elastic"><div class="topo-icon">📝</div><div class="topo-label">Elastic</div><div class="topo-sub">Error Log Search</div></div>
+            <div class="topo-node" id="topo-gitlab"><div class="topo-icon">🔀</div><div class="topo-label">GitLab</div><div class="topo-sub">Blame + MR</div></div>
+            <div class="topo-node" id="topo-mongodb"><div class="topo-icon">🗄️</div><div class="topo-label">MongoDB</div><div class="topo-sub">Schema Patch</div></div>
+            <div class="topo-node" id="topo-fivetran"><div class="topo-icon">🔄</div><div class="topo-label">Fivetran</div><div class="topo-sub">Downstream Sync</div></div>
+            <div class="topo-node" id="topo-arize"><div class="topo-icon">🧠</div><div class="topo-label">Arize Phoenix</div><div class="topo-sub">Self-Introspection</div></div>
+        </div>
+
+        <div class="confidence-panel">
+            <div class="cp-title">🎯 SENTINEL Confidence Engine — Live</div>
+            <div class="cp-grid">
+                <div class="cp-item"><div class="cp-val" id="cpScore">—</div><div class="cp-lbl">Confidence</div></div>
+                <div class="cp-item"><div class="cp-val" id="cpTier">—</div><div class="cp-lbl">Risk Tier</div></div>
+                <div class="cp-item"><div class="cp-val" id="cpAction">—</div><div class="cp-lbl">Action</div></div>
+                <div class="cp-item"><div class="cp-val" id="cpDrift">—</div><div class="cp-lbl">Drift Signal</div></div>
             </div>
         </div>
 
-        <div class="center">
-            <div class="topology-grid">
-                <div class="topology-node active">
-                    <div class="node-icon">📊</div>
-                    <div class="node-label">Dynatrace</div>
-                    <div class="node-status">Pod Topology Query</div>
-                </div>
-                <div class="topology-node active">
-                    <div class="node-icon">📝</div>
-                    <div class="node-label">Elastic</div>
-                    <div class="node-status">Error Log Search</div>
-                </div>
-                <div class="topology-node active">
-                    <div class="node-icon">🔀</div>
-                    <div class="node-label">GitLab</div>
-                    <div class="node-status">Branch & MR Creation</div>
-                </div>
-            </div>
-
-            <div class="timeline">
-                <div class="timeline-title">📋 Execution Timeline</div>
-                <div class="timeline-event success">✓ [10:00:00.000] Stage 1: Dynatrace topology query completed — pod: k8s-pod-x92-node4</div>
-                <div class="timeline-event success">✓ [10:00:02.120] Stage 2: Elastic logs parsed — error: BSONType mismatch at src/payments/processor.py:243</div>
-                <div class="timeline-event success">✓ [10:00:04.890] Stage 3: GitLab blame completed — commit: fa83b2cc</div>
-                <div class="timeline-event success">✓ [10:00:06.234] Stage 3: Hotfix branch created — hotfix/auto/2026-06-09-76208b27</div>
-                <div class="timeline-event success">✓ [10:00:11.420] Stage 3: Merge Request opened — MR#42</div>
-                <div class="timeline-event running">⟳ [10:00:12.100] Awaiting Stage 4: MongoDB schema adjustment...</div>
-            </div>
-        </div>
-
-        <div class="right-panel">
-            <div class="panel-section">
-                <div class="panel-title">Active Stage</div>
-                <div class="panel-content">
-                    Stage 3: GitLab
-                    Root Cause Auditing
-                </div>
-            </div>
-
-            <div class="panel-section">
-                <div class="panel-title">Error Signature</div>
-                <div class="panel-content">
-                    BSONType mismatch:
-                    expected objectId
-                </div>
-            </div>
-
-            <div class="panel-section">
-                <div class="panel-title">Affected File</div>
-                <div class="panel-content">
-                    src/payments/processor.py:243
-                </div>
-            </div>
-
-            <div class="panel-section">
-                <div class="panel-title">Suspected Commit</div>
-                <div class="panel-content">
-                    fa83b2cc1deadbeef
-                    "refactor: update BSON..."
-                </div>
-            </div>
-
-            <div class="separator"></div>
-
-            <div class="panel-section">
-                <div class="panel-title">Merge Request</div>
-                <div class="panel-content">
-                    <a href="#" style="color: #58A6FF; text-decoration: none;">
-                        https://gitlab.com/org/repo/-/merge_requests/42
-                    </a>
-                </div>
-                <div class="action-buttons">
-                    <button class="btn btn-primary">Approve</button>
-                    <button class="btn btn-secondary">Reject</button>
-                </div>
-            </div>
-
-            <div class="panel-section">
-                <div class="panel-title">Next Action</div>
-                <div class="panel-content">
-                    Pause until manual approval.
-                    Stage 4 (MongoDB) ready on signal.
-                </div>
-            </div>
+        <div class="timeline">
+            <div class="tl-title">📋 Execution Timeline + Agent Reasoning</div>
+            <div id="timeline"></div>
         </div>
     </div>
 
-    <script>
-        // Simulated live update (for demo purposes)
-        function updateHealthStatus() {
-            const statuses = ['critical', 'warning', 'healthy'];
-            const colors = {
-                'critical': '● CRITICAL',
-                'warning': '● WARNING',
-                'healthy': '● HEALTHY'
-            };
-            
-            // For demo, cycle through or keep critical
-            const statusEl = document.getElementById('systemHealth');
-            // Keep as critical to show active incident
-        }
+    <!-- Right Panel -->
+    <div class="right-panel">
+        <div class="phoenix-badge">🟣 Arize Phoenix MCP — LIVE</div>
 
-        // Simulate status pulse animations
-        setInterval(() => {
-            const dots = document.querySelectorAll('.status-dot.running');
-            dots.forEach(dot => {
-                dot.style.opacity = Math.random() > 0.5 ? 1 : 0.5;
-            });
-        }, 800);
+        <div class="rp-section">
+            <div class="rp-title">Active Stage</div>
+            <div class="rp-box" id="rpStage">Idle — trigger a run</div>
+        </div>
+        <div class="rp-section">
+            <div class="rp-title">Error Signature</div>
+            <div class="rp-box" id="rpError">—</div>
+        </div>
+        <div class="rp-section">
+            <div class="rp-title">Agent Reasoning Chain</div>
+            <div class="rp-box" id="rpReasoning"><span style="color:var(--muted);font-size:.68rem">Reasoning appears during a run.</span></div>
+        </div>
+        <div class="rp-section">
+            <div class="rp-title">Confidence Factors</div>
+            <ul class="factor-list" id="rpFactors"><li style="color:var(--muted)">No active run.</li></ul>
+        </div>
+        <div class="separator"></div>
+        <div class="rp-section">
+            <div class="rp-title">Similar Past Incidents (Memory)</div>
+            <div id="rpMemory"></div>
+        </div>
+        <div class="rp-section">
+            <div class="rp-title">Phoenix Eval Score</div>
+            <div class="rp-box" id="rpEval">—</div>
+        </div>
+        <div class="separator"></div>
+        <div class="rp-section">
+            <div class="rp-title">Merge Request</div>
+            <div class="rp-box"><a id="rpMR" href="#">—</a></div>
+            <div class="btn-row" id="approvalRow" style="display:none">
+                <button class="btn btn-green" onclick="approveStage4()">✓ Approve</button>
+                <button class="btn btn-red"   onclick="rejectStage4()">✕ Reject</button>
+            </div>
+        </div>
+        <div class="rp-section">
+            <div class="rp-title">Outcome Prediction</div>
+            <div class="rp-box" id="rpPrediction">—</div>
+        </div>
+    </div>
+</div>
 
-        // Responsive interactions
-        document.querySelectorAll('.stage-node').forEach(node => {
-            node.addEventListener('click', function() {
-                document.querySelectorAll('.stage-node').forEach(n => {
-                    n.style.backgroundColor = '#161B22';
-                });
-                this.style.backgroundColor = '#1C2128';
-            });
-        });
-    </script>
+<script>
+const STAGES = [
+    {id:'stage1_ingest',           label:'Dynatrace', icon:'📊', topo:'dynatrace'},
+    {id:'stage2_logs',             label:'Elastic',   icon:'📝', topo:'elastic'},
+    {id:'stage3_git_remediation',  label:'GitLab',    icon:'🔀', topo:'gitlab'},
+    {id:'stage4_db_stabilize',     label:'MongoDB',   icon:'🗄️', topo:'mongodb'},
+    {id:'stage5_downstream_align', label:'Fivetran',  icon:'🔄', topo:'fivetran'},
+    {id:'stage6_cognitive_assess', label:'Arize',     icon:'🧠', topo:'arize'},
+];
+const CD = [
+    {score:.94, tier:'LOW',    action:'AUTO_HEAL',        drift:.04, factors:['✓ All indicators green']},
+    {score:.91, tier:'LOW',    action:'AUTO_HEAL',        drift:.06, factors:['✓ 6/6 similar incidents resolved']},
+    {score:.87, tier:'MEDIUM', action:'AUTO_HEAL',        drift:.09, factors:['✓ Known error signature','⚠ 2 partial resolutions in memory']},
+    {score:.68, tier:'MEDIUM', action:'REQUEST_APPROVAL', drift:.18, factors:['⚠ Schema change affects 48K records','⚠ Drift signal elevated']},
+    {score:.88, tier:'LOW',    action:'AUTO_HEAL',        drift:.05, factors:['✓ Downstream sync successful in all prior runs']},
+    {score:.96, tier:'LOW',    action:'AUTO_HEAL',        drift:.03, factors:['✓ Arize compliance=0.97','✓ Trace saved to golden dataset']},
+];
+const REASONING = [
+    ['Queried Dynatrace topology — pod k8s-pod-x92-node4 flagged.','Cross-referenced last 8 Phoenix traces for this service.','Confidence: 0.94 (LOW risk) → AUTO_HEAL.'],
+    ['Searched Elastic for BSONType errors in last 30m.','Found match at src/payments/processor.py:243.','No drift spike. Confidence: 0.91 → AUTO_HEAL.'],
+    ['Ran git blame — commit fa83b2cc identified.','Searched Phoenix for this commit sha in past traces.','Found 3 prior fixes using same hotfix branch pattern. Confidence: 0.87 → AUTO_HEAL.'],
+    ['collMod targets 48,312 documents.','Phoenix drift signal = 0.18 (above threshold 0.15).','Confidence engine: 0.68 (MEDIUM, DB stage) → REQUEST_APPROVAL.'],
+    ['Fivetran connector config validated against schema patch.','Triggered resync — all 5 prior resyncs on this connector succeeded.','Confidence: 0.88 → AUTO_HEAL.'],
+    ['Ingested full audit trail to Phoenix (6 spans).','LLM-as-a-Judge eval score: 0.96 (grade A).','Trace promoted to sentinel_golden_traces dataset. Self-improvement loop complete.'],
+];
+const MEMORY_ROWS = [
+    {id:'a1b2c3d4', error:'BSONType mismatch', outcome:'SUCCESS', compliance:0.97},
+    {id:'e5f6a7b8', error:'BSONType mismatch', outcome:'SUCCESS', compliance:0.95},
+    {id:'c9d0e1f2', error:'schema_drift',       outcome:'PARTIAL', compliance:0.81},
+];
+const STAGE_RUNNING = ['Querying Dynatrace topology…','Searching Elastic logs…','Running git blame + creating hotfix MR…','Schema change staged — awaiting operator approval…','Adjusting Fivetran connector + triggering resync…','Ingesting traces to Phoenix · Running LLM-as-a-Judge eval…'];
+const STAGE_OK      = ['Topology OK — pod k8s-pod-x92-node4','Error matched at processor.py:243','MR#42 opened — hotfix/auto/2026-06-11','collMod applied · 48K docs quarantined','Resync triggered — status=syncing','Compliance=0.97 · Trace saved to golden dataset'];
+
+let healCount=0, runActive=false, approvalPending=false;
+
+function initCards() {
+    const c=document.getElementById('stageCards');
+    STAGES.forEach((s,i)=>{
+        const el=document.createElement('div');
+        el.className='stage-card'; el.id='sc-'+s.id;
+        el.innerHTML=`<div class="sc-top"><div class="sc-dot idle" id="dot-${s.id}"></div><span class="sc-name">${i+1}. ${s.icon} ${s.label}</span></div><div class="sc-msg" id="msg-${s.id}">idle</div><div class="confidence-bar"><div class="confidence-fill" id="cf-${s.id}" style="width:0%;background:var(--muted)"></div></div>`;
+        c.appendChild(el);
+    });
+}
+function setDot(sid,st){const d=document.getElementById('dot-'+sid);if(d)d.className='sc-dot '+st;}
+function setMsg(sid,t){const m=document.getElementById('msg-'+sid);if(m)m.textContent=t;}
+function setTopo(tid,cls){const t=document.getElementById('topo-'+tid);if(t)t.className='topo-node '+cls;}
+function addTL(msg,lvl){
+    const tl=document.getElementById('timeline');
+    const ts=new Date().toLocaleTimeString('en-US',{hour12:false});
+    const el=document.createElement('div');
+    el.className='tl-event '+lvl;
+    el.innerHTML=`<span class="tl-ts">${ts}</span>${msg}`;
+    tl.insertBefore(el,tl.firstChild);
+}
+function updateConf(idx){
+    const cd=CD[idx]||{};
+    document.getElementById('cpScore').textContent=cd.score?(cd.score*100).toFixed(0)+'%':'—';
+    document.getElementById('cpDrift').textContent=cd.drift?cd.drift.toFixed(2):'—';
+    const te=document.getElementById('cpTier'); te.textContent=cd.tier||'—'; te.className='cp-val tier-'+(cd.tier||'');
+    document.getElementById('cpAction').textContent=(cd.action||'—').replace(/_/g,' ');
+    document.getElementById('overallConf').textContent=cd.score?(cd.score*100).toFixed(0)+'%':'—';
+    const pct=cd.score?cd.score*100:0;
+    const color=pct>=85?'var(--green)':pct>=65?'var(--yellow)':pct>=40?'var(--orange)':'var(--red)';
+    const fill=document.getElementById('cf-'+STAGES[idx].id);
+    if(fill){fill.style.width=pct+'%';fill.style.background=color;}
+    const fl=document.getElementById('rpFactors');
+    fl.innerHTML=(cd.factors||[]).map(f=>`<li class="${f.startsWith('⚠')?'warn':'ok'}">${f}</li>`).join('');
+}
+function updateReasoning(idx){
+    const steps=REASONING[idx]||[];
+    document.getElementById('rpReasoning').innerHTML=steps.map(s=>`<div class="reasoning-step">${s}</div>`).join('');
+}
+function updateMemory(){
+    document.getElementById('rpMemory').innerHTML=MEMORY_ROWS.map(r=>
+        `<div class="memory-item"><span style="color:var(--muted)">#${r.id}</span><span class="mi-outcome ${r.outcome}" style="float:right">${r.outcome}</span><br><span style="font-size:.62rem;color:var(--muted)">${r.error} · compliance=${r.compliance}</span></div>`
+    ).join('');
+}
+
+function triggerHeal(){
+    if(runActive)return;
+    runActive=true;
+    document.getElementById('timeline').innerHTML='';
+    STAGES.forEach(s=>{setDot(s.id,'idle');setMsg(s.id,'idle');setTopo(s.topo,'');const f=document.getElementById('cf-'+s.id);if(f){f.style.width='0%';f.style.background='var(--muted)';}});
+    document.getElementById('mttd').textContent='—';
+    document.getElementById('mttr').textContent='—';
+    document.getElementById('compliance').textContent='—';
+    document.getElementById('sysHealth').textContent='● HEALING';
+    document.getElementById('sysHealth').className='kpi-value';
+    document.getElementById('systemBadge').textContent='AUTO-HEALING';
+    document.getElementById('systemBadge').className='system-badge badge-healing';
+    document.getElementById('rpError').textContent='BSONType mismatch: expected double at src/payments/processor.py:243';
+    document.getElementById('rpPrediction').textContent='HIGH probability of success — 6 similar incidents resolved.';
+    updateMemory();
+    addTL('Healing run triggered. Alert ingested.','info');
+    setTimeout(()=>document.getElementById('mttd').textContent='0.42s',400);
+    runStage(0);
+}
+
+function runStage(idx){
+    if(idx>=STAGES.length){finalize();return;}
+    const s=STAGES[idx];
+    setDot(s.id,'running'); setMsg(s.id,STAGE_RUNNING[idx]); setTopo(s.topo,'active');
+    document.getElementById('sc-'+s.id).classList.add('active');
+    document.getElementById('rpStage').textContent=`Stage ${idx+1}: ${s.label}`;
+    updateConf(idx); updateReasoning(idx);
+    addTL(`Stage ${idx+1} [${s.label}] — ${STAGE_RUNNING[idx]}`,'info');
+    if(idx===3){
+        setTimeout(()=>{
+            setDot(s.id,'awaiting_approval'); setMsg(s.id,'awaiting operator approval'); setTopo(s.topo,'pending');
+            approvalPending=true;
+            document.getElementById('approveBtn').style.display='block';
+            document.getElementById('rejectBtn').style.display='block';
+            document.getElementById('approvalRow').style.display='flex';
+            document.getElementById('rpMR').textContent='https://gitlab.com/org/repo/-/merge_requests/42';
+            addTL('Stage 4 requires operator approval — MongoDB collMod staged.','warn');
+        },800); return;
+    }
+    setTimeout(()=>{
+        setDot(s.id,'success'); setMsg(s.id,STAGE_OK[idx]); setTopo(s.topo,'success');
+        document.getElementById('sc-'+s.id).classList.remove('active');
+        addTL(`✓ Stage ${idx+1} [${s.label}] — ${STAGE_OK[idx]}`,'ok');
+        runStage(idx+1);
+    },950);
+}
+
+function approveStage4(){
+    if(!approvalPending)return;
+    approvalPending=false;
+    ['approveBtn','rejectBtn'].forEach(id=>document.getElementById(id).style.display='none');
+    document.getElementById('approvalRow').style.display='none';
+    setDot(STAGES[3].id,'running'); setMsg(STAGES[3].id,'Applying collMod…');
+    addTL('Operator approved Stage 4 — applying collMod.','info');
+    setTimeout(()=>{
+        setDot(STAGES[3].id,'success'); setMsg(STAGES[3].id,STAGE_OK[3]); setTopo(STAGES[3].topo,'success');
+        document.getElementById('sc-'+STAGES[3].id).classList.remove('active');
+        addTL(`✓ Stage 4 [MongoDB] — ${STAGE_OK[3]}`,'ok');
+        runStage(4);
+    },700);
+}
+
+function rejectStage4(){
+    if(!approvalPending)return;
+    approvalPending=false;
+    ['approveBtn','rejectBtn'].forEach(id=>document.getElementById(id).style.display='none');
+    document.getElementById('approvalRow').style.display='none';
+    setDot(STAGES[3].id,'failed'); setMsg(STAGES[3].id,'Rejected by operator'); setTopo(STAGES[3].topo,'error');
+    addTL('✕ Operator rejected Stage 4 — run aborted.','bad');
+    document.getElementById('sysHealth').textContent='● REJECTED';
+    document.getElementById('sysHealth').className='kpi-value red';
+    document.getElementById('systemBadge').textContent='RUN REJECTED';
+    document.getElementById('systemBadge').className='system-badge badge-critical';
+    runActive=false;
+}
+
+function finalize(){
+    healCount++;
+    document.getElementById('healed').textContent=healCount;
+    document.getElementById('mttr').textContent='8.4s';
+    document.getElementById('compliance').textContent='97%';
+    document.getElementById('sysHealth').textContent='● HEALTHY';
+    document.getElementById('sysHealth').className='kpi-value green';
+    document.getElementById('systemBadge').textContent='HEALED';
+    document.getElementById('systemBadge').className='system-badge badge-healthy';
+    document.getElementById('rpEval').textContent='Score: 0.96 (A) — Agent correctly identified BSONType mismatch and applied minimal-invasive collMod. Trace saved to sentinel_golden_traces.';
+    addTL('🎯 SENTINEL healing loop complete. Trace promoted to Phoenix golden dataset.','ok');
+    runActive=false;
+    setTimeout(()=>{
+        document.getElementById('sysHealth').textContent='● CRITICAL';
+        document.getElementById('sysHealth').className='kpi-value red';
+        document.getElementById('systemBadge').textContent='INCIDENT ACTIVE';
+        document.getElementById('systemBadge').className='system-badge badge-critical';
+    },5000);
+}
+
+function triggerSelfImprove(){
+    addTL('🔮 Phoenix self-improve triggered — querying last 20 traces…','info');
+    setTimeout(()=>{
+        addTL('Phoenix eval avg: 0.94 — above threshold. No prompt update needed.','ok');
+        addTL('✓ 3 traces promoted to sentinel_golden_traces dataset.','ok');
+    },1500);
+}
+
+initCards();
+updateMemory();
+</script>
 </body>
 </html>
